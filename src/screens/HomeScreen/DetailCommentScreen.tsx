@@ -10,7 +10,7 @@ import {
 import { View } from "react-native";
 import { push, ref, remove, set, update } from "firebase/database";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { Comment, User } from './HomeScreen';
+import { Comment } from './HomeScreen';
 import { auth, dbRealTime } from "../../configs/firebaseConfig";
 import { styles } from "../../theme/styles";
 

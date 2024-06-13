@@ -11,15 +11,15 @@ import { onValue, ref } from "firebase/database";
 import { CommentsCardComponent } from "./components/CommentsCardComponent";
 
 //Interfaz que va a tener la data del usuario
-export interface User {
+interface User {
   id: string
 }
 
 export interface Comment {
+  userId: User;
   id: string;
   email: string;
   comment: string;
-  userId: User
 }
 
 export const HomeScreen = () => {
@@ -66,6 +66,8 @@ export const HomeScreen = () => {
         listComments.push(value);
       });
       setComments(listComments);
+      console.log("Lista",listComments);
+      
     })
   }
 
