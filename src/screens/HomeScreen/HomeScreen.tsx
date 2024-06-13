@@ -1,47 +1,72 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, View } from "react-native";
-import { Avatar, IconButton, Text } from "react-native-paper";
+import { Avatar, FAB, IconButton, Text } from "react-native-paper";
 import { styles } from "../../theme/styles";
-import firebase from "firebase/auth";
+import firebase, { signOut } from "firebase/auth";
 import { ProductCardComponent } from "./components/ProductCardComponent";
-import { auth } from "../../configs/firebaseConfig";
+import { auth, dbRealTime } from "../../configs/firebaseConfig";
 import { CommonActions, useNavigation } from "@react-navigation/native";
+import { NewCommentComponent } from "./components/NewCommentComponent";
+import { onValue, ref } from "firebase/database";
+import { CommentsCardComponent } from "./components/CommentsCardComponent";
 
 //Interfaz que va a tener la data del usuario
-interface FormUser {
-  name: string;
+export interface User {
+  id: string
 }
 
-//Interfaz para el producto
-interface Product {
-  name: string;
-  price: number;
+export interface Comment {
+  id: string;
+  email: string;
+  comment: string;
+  userId: User
 }
 
 export const HomeScreen = () => {
-  //Hook useState: para ir trabajando la data del usuario
-  const [formUser, setFormUser] = useState<FormUser>({
-    name: "",
-  });
 
   //Hook useState: que me permita trabajar con la data del usuario autenticado
   const [userAuth, setUserAuth] = useState<firebase.User | null>(null);
 
-  //Hook useState: para listar los productos
-  const [products, setProducts] = useState<Product[]>([{ name: "", price: 0 }]);
-
   //Hook useNavigation: para navegar entre Screens
   const navigation = useNavigation();
 
+  //Hook useEffect: para capturar la data del usuario autenticado
+  useEffect(() => {
+    setUserAuth(auth.currentUser);
+    getAllComments();
+    //console.log("Comments"+comments);
+    
+  }, []);
+
+  //Hook useState: para manipular el modal de añadir mensaje
+  const [showModalComment, setShowModalComment] = useState<boolean>(false);
+
+  //Hook useState: para listas los comentarios
+  const [comments, setComments] = useState<Comment[]>([]);
+
   //Función de Logout
-  const handleLogout = async () =>{
-    try {
-        await auth.signOut();
-        navigation.dispatch(CommonActions.navigate({name:"Login"}))
-    } catch (ex) {
-        console.log(ex);
-        
-    }
+  const handlerSignOut = async () => {
+    await signOut(auth);
+    navigation.dispatch(
+      CommonActions.reset({ index: 0, routes: [{ name: "Login" }] })
+    );
+  };
+  
+  //READ - CRUD
+  const getAllComments = () => {
+    const dbRef = ref(dbRealTime, "comments/"+auth.currentUser?.uid);
+    onValue(dbRef, (snapshot) =>{
+      const data = snapshot.val();
+      console.log(data);
+      if(!data) return;
+      const getKeys = Object.keys(data);
+      const listComments: Comment[] = [];
+      getKeys.forEach((key)=>{
+        const value = { ...data[key], id: key };
+        listComments.push(value);
+      });
+      setComments(listComments);
+    })
   }
 
   return (
@@ -51,24 +76,30 @@ export const HomeScreen = () => {
           <Avatar.Text size={50} label="MI" />
           <View>
             <Text variant="bodySmall">Bienvenido</Text>
-            <Text variant="labelLarge">{userAuth?.displayName}</Text>
+            <Text variant="labelLarge">{userAuth?.email}</Text>
           </View>
           <View style={styles.iconEnd}>
-            <IconButton
-              icon="logout"
-              size={28}
-              onPress={() => {handleLogout} }
-            />
+            <IconButton icon="logout" size={28} onPress={handlerSignOut} />
           </View>
         </View>
         <View>
+          
           <FlatList
-            data={products}
-            renderItem={({ item }) => <ProductCardComponent />}
-            keyExtractor={(item) => item.name}
+            data={comments}
+            renderItem={({ item }) => <CommentsCardComponent comments={item}/>}
+            keyExtractor={(item) => item.id}
           />
         </View>
       </View>
+      <FAB
+        icon="plus"
+        style={styles.fab}
+        onPress={() => setShowModalComment(true)}
+      />
+      <NewCommentComponent
+        showModalComment={showModalComment}
+        setShowModalComment={setShowModalComment}
+      />
     </>
   );
 };

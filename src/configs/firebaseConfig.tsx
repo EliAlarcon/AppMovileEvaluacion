@@ -2,6 +2,8 @@
 import { initializeApp } from "firebase/app";
 import { getReactNativePersistence, initializeAuth } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
+import { getDatabase } from "firebase/database";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -12,7 +14,8 @@ const firebaseConfig = {
   projectId: "app-movile-evaluacion",
   storageBucket: "app-movile-evaluacion.appspot.com",
   messagingSenderId: "8476597903",
-  appId: "1:8476597903:web:3350a9164e35c913115afa"
+  appId: "1:8476597903:web:3350a9164e35c913115afa",
+  databaseUrl: "https://app-movile-evaluacion-default-rtdb.firebaseio.com/"
 };
 
 // Initialize Firebase
@@ -21,3 +24,6 @@ const firebase = initializeApp(firebaseConfig);
 export const auth = initializeAuth(firebase, {
     persistence: getReactNativePersistence(ReactNativeAsyncStorage)
 });
+
+// Initialize Realtime Database and get a reference to the service
+export const dbRealTime = getDatabase(firebase);
